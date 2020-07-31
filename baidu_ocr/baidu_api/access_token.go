@@ -6,9 +6,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
+	"time"
 
 	"github.com/leychan/common_ocr/baidu_ocr/baidu_config"
+	file2 "github.com/leychan/common_ocr/cache/file"
 	redis2 "github.com/leychan/common_ocr/cache/redis"
 )
 
@@ -29,14 +32,13 @@ func GetAccessToken(t string) (string, error) {
 		}
 	case "text":
 		token, err := getAccessTokenFromRedis(textAccessTokenInRedis)
-		fmt.Println("token: ", token, "   error: ", err)
 		if err == nil {
 			return token, nil
 		}
 	default:
 		return "", errors.New("unknown env params")
 	}
- 	fmt.Println("取 http token")
+	fmt.Println("取 http token")
 	return getHttpAccessToken(t)
 }
 
@@ -65,9 +67,9 @@ func getHttpAccessToken(t string) (string, error) {
 	if ac.Error == "" {
 		switch strings.ToLower(t) {
 		case "goods":
-			_, err = storeAccessTokenToRedis(body, goodsAccessTokenInRedis, ac.ExpiresIn)
+			_, err = storeAccessTokenToRedis([]byte(ac.AccessToken), goodsAccessTokenInRedis, ac.ExpiresIn)
 		case "text":
-			_, err = storeAccessTokenToRedis(body, textAccessTokenInRedis, ac.ExpiresIn)
+			_, err = storeAccessTokenToRedis([]byte(ac.AccessToken), textAccessTokenInRedis, ac.ExpiresIn)
 		}
 	} else {
 		return "", errors.New(ac.Error)
@@ -88,26 +90,26 @@ func getAccessTokenFromRedis(key string) (string, error) {
 //}
 
 //获取本地缓存的token等相关数据
-//func getFileCachedAccessToken(cachePath string) (string, error) {
-//	c, err := file2.Get(cachePath)
-//	if err != nil {
-//		return "", err
-//	}
-//	ac, _ := unmarshalToken(c)
-//	file, _ := os.Open(cachePath)
-//	fileInfo, _ := file.Stat()
-//	//fmt.Println("now timestamp ", time.Now().Unix())
-//	//fmt.Println("file last modify time ", fileInfo.ModTime().Unix())
-//	if (time.Now().Unix() - fileInfo.ModTime().Unix()) > ac.ExpiresIn {
-//		err := os.Remove(cachePath)
-//		if err != nil {
-//			return "", err
-//		}
-//		return "", errors.New("token file is expired")
-//	}
-//	//fmt.Println("读取到本地缓存文件...")
-//	return ac.AccessToken, nil
-//}
+func getFileCachedAccessToken(cachePath string) (string, error) {
+	c, err := file2.Get(cachePath)
+	if err != nil {
+		return "", err
+	}
+	ac, _ := unmarshalToken(c)
+	file, _ := os.Open(cachePath)
+	fileInfo, _ := file.Stat()
+	//fmt.Println("now timestamp ", time.Now().Unix())
+	//fmt.Println("file last modify time ", fileInfo.ModTime().Unix())
+	if (time.Now().Unix() - fileInfo.ModTime().Unix()) > ac.ExpiresIn {
+		err := os.Remove(cachePath)
+		if err != nil {
+			return "", err
+		}
+		return "", errors.New("token file is expired")
+	}
+	//fmt.Println("读取到本地缓存文件...")
+	return ac.AccessToken, nil
+}
 
 func storeAccessTokenToRedis(body []byte, key string, expire int64) (bool, error) {
 	_, err := redis2.Set(key, body, expire)
@@ -120,7 +122,6 @@ func storeAccessTokenToRedis(body []byte, key string, expire int64) (bool, error
 //func storeAccessTokenToFile(path string, body []byte) (bool, error) {
 //	return file2.Set(path, body)
 //}
-
 
 //解析返回的token等相关数据
 func unmarshalToken(token []byte) (baidu_config.AccessToken, error) {

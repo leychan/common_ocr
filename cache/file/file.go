@@ -1,7 +1,6 @@
 package file
 
 func Set(path string, body []byte) (bool, error) {
-
 	return true, nil
 }
 
