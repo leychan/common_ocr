@@ -55,6 +55,11 @@ github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORN
 github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=
 github.com/kr/text v0.1.0 h1:45sCR5RtlFHMR4UwH9sdQ5TC8v0qDQCHnXt+kaKSTVE=
 github.com/kr/text v0.1.0/go.mod h1:4Jbv+DJW3UT/LiOwJeYQe1efqtUx/iVham/4vfdArNI=
+github.com/leychan/common_ocr v0.0.0-20200731030236-f85be54c9568 h1:7nHtK3Ebp4Li84HO4HEZCnITt/wkRMMkdbaXDWPlEVo=
+github.com/leychan/common_ocr/baidu_ocr/baidu_config v0.0.0-20200731030744-e433e53f2a30 h1:0RMTCKAjMWO9Es/2LHcpXpUCC0mkjfwO21Jvf9WP0Mk=
+github.com/leychan/common_ocr/baidu_ocr/baidu_config v0.0.0-20200731030744-e433e53f2a30/go.mod h1:QW+1D8sN55ZIY4fV6p0WYJMOdMlt+JrsvJD1i46b5pM=
+github.com/leychan/common_ocr/cache/redis v0.0.0-20200731030744-e433e53f2a30 h1:/5KEtQkjTvj1ZDRiCz0tpwr26w3Ne8RbD4bWz6GpHwk=
+github.com/leychan/common_ocr/cache/redis v0.0.0-20200731030744-e433e53f2a30/go.mod h1:3yBMXr8njMmnNQfY6X1fRDuLVHZZs05S3p7Sh8Tp9sg=
 github.com/onsi/ginkgo v1.6.0/go.mod h1:lLunBs/Ym6LB5Z9jYTR76FiuTmxDTDusOGeTQH+WWjE=
 github.com/onsi/ginkgo v1.10.1 h1:q/mM8GF/n0shIN8SaAZ0V+jnLPzen6WIVZdiwrRlMlo=
 github.com/onsi/ginkgo v1.10.1/go.mod h1:lLunBs/Ym6LB5Z9jYTR76FiuTmxDTDusOGeTQH+WWjE=
