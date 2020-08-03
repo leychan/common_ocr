@@ -1,4 +1,4 @@
-package baidu_config
+package baidu_ocr
 
 import (
 	"errors"
@@ -9,22 +9,22 @@ import (
 )
 
 type AccessToken struct {
-	RefreshToken  		string `json:"refresh_token"`
-	ExpiresIn    		int64  `json:"expires_in"`
-	SessionKey    		string `json:"session_key"`
-	AccessToken   		string `json:"access_token"`
-	Scope         		string `json:"scope"`
-	SessionSecret 		string `json:"session_secret"`
-	ErrorDescription 	string `json:"error_description"`
-	Error        		string `json:"error"`
+	RefreshToken     string `json:"refresh_token"`
+	ExpiresIn        int64  `json:"expires_in"`
+	SessionKey       string `json:"session_key"`
+	AccessToken      string `json:"access_token"`
+	Scope            string `json:"scope"`
+	SessionSecret    string `json:"session_secret"`
+	ErrorDescription string `json:"error_description"`
+	Error            string `json:"error"`
 }
 
 type account struct {
-	apiKey string
+	apiKey    string
 	apiSecret string
 }
 
-func GetInstance(t string) (string, error) {
+func getAccessApiUrl(t string) (string, error) {
 	a, err := getBaiduOCRAccount(t)
 	if err != nil {
 		return "", err
@@ -52,4 +52,3 @@ func getBaiduOCRAccount(t string) (account, error) {
 	}
 	return a, nil
 }
-

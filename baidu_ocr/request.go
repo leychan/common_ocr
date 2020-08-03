@@ -1,4 +1,4 @@
-package baidu_api
+package baidu_ocr
 
 import (
 	"bytes"
@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func jsonRequest(params []byte, url string) ([]byte, error){
+func jsonRequest(params []byte, url string) ([]byte, error) {
 	return request(params, url, "json")
 }
 

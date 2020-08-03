@@ -2,24 +2,36 @@ package file
 
 import (
 	"errors"
+	"io/ioutil"
+	"os"
 
-	go_helper "github.com/leychan/go-helper"
+	gohelper "github.com/leychan/go-helper"
 )
 
-func Set(path string, body []byte) (bool, error) {
-	if !go_helper.FileOrDirExists(path) {
-		go_helper.CreateFile(path)
+func Set(path string, body []byte) error {
+	if !gohelper.FileOrDirExists(path) {
+		gohelper.CreateFile(path)
 	}
-	err := go_helper.WriteFile(path, body, "")
+	err := gohelper.WriteFile(path, body)
 	if err != nil {
-		return false, err
+		return err
 	}
-	return true, nil
+	return nil
 }
 
 func Get(path string) ([]byte, error) {
-	if !go_helper.FileOrDirExists(path) {
+	if !gohelper.FileOrDirExists(path) {
 		return []byte{}, errors.New("no token file")
 	}
-
+	f, err := os.Open(path)
+	if err != nil {
+		panic(err)
+		return []byte{}, err
+	}
+	content, err := ioutil.ReadAll(f)
+	if err != nil {
+		return []byte{}, err
+	}
+	f.Close()
+	return content, nil
 }

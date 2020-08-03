@@ -1,4 +1,4 @@
-package baidu_api
+package baidu_ocr
 
 import (
 	"encoding/json"
@@ -7,44 +7,74 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/leychan/common_ocr/baidu_ocr/baidu_config"
 	file2 "github.com/leychan/common_ocr/cache/file"
 	redis2 "github.com/leychan/common_ocr/cache/redis"
 )
 
-//var goodsCachePath = "goods_cache_file"
-//var textCachePath = "text_cache_file"
-var goodsAccessTokenInRedis = "goods_access_token"
-var textAccessTokenInRedis = "text_access_token"
+var (
+	goodsCachePath          string
+	textCachePath           string
+	goodsAccessTokenInRedis string
+	textAccessTokenInRedis  string
+	cacheDriver             string
+	redisKeyMap             = map[string]string{
+		"goods": goodsAccessTokenInRedis,
+		"text":  textAccessTokenInRedis,
+	}
+	fileKeyMap = map[string]string{
+		"goods": goodsCachePath,
+		"text":  textCachePath,
+	}
+)
+
+func init() {
+	err := godotenv.Load(".env")
+	if err != nil {
+		panic(err)
+	}
+	goodsCachePath = os.Getenv("FILE_CACHE_PATH") + "/" + os.Getenv("FILE_GOODS_ACTOKEN_PATH")
+	textCachePath = os.Getenv("FILE_CACHE_PATH") + "/" + os.Getenv("FILE_TEXT_ACTOKEN_PATH")
+	goodsAccessTokenInRedis = os.Getenv("REDIS_GOODS_ACTOKEN_KEY")
+	textAccessTokenInRedis = os.Getenv("REDIS_TEXT_ACTOKEN_KEY")
+	cacheDriver = os.Getenv("CACHE_DRIVER")
+}
 
 //从百度api获取access_token
 func GetAccessToken(t string) (string, error) {
-	fmt.Println("t:", t)
 	//获取缓存中的access_token等数据
-	switch strings.ToLower(t) {
-	case "goods":
-		token, err := getAccessTokenFromRedis(goodsAccessTokenInRedis)
-		if err == nil {
-			return token, nil
-		}
-	case "text":
-		token, err := getAccessTokenFromRedis(textAccessTokenInRedis)
-		if err == nil {
-			return token, nil
-		}
-	default:
-		return "", errors.New("unknown env params")
+	accessToken, err := getCachedAccessToken(t)
+	if err == nil {
+		return accessToken, nil
 	}
 	fmt.Println("取 http token")
 	return getHttpAccessToken(t)
 }
 
+func getCachedAccessToken(t string) (string, error) {
+	if cacheDriver == "redis" {
+		if key, ok := redisKeyMap[t]; ok {
+			token, err := getAccessTokenFromRedis(key)
+			if err == nil {
+				return token, nil
+			}
+		}
+	} else {
+		if key, ok := fileKeyMap[t]; ok {
+			token, err := getAccessTokenFromFile(key)
+			if err == nil {
+				return token, nil
+			}
+		}
+	}
+	return "", errors.New("env params err")
+}
+
 func getHttpAccessToken(t string) (string, error) {
-	b, err := baidu_config.GetInstance(t)
-	fmt.Println(err)
+	b, err := getAccessApiUrl(t)
 	if err != nil {
 		return "", err
 	}
@@ -56,7 +86,6 @@ func getHttpAccessToken(t string) (string, error) {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println(err)
 		return "", err
 	}
 	ac, err := unmarshalToken(body)
@@ -65,11 +94,14 @@ func getHttpAccessToken(t string) (string, error) {
 	}
 	//正确返回
 	if ac.Error == "" {
-		switch strings.ToLower(t) {
-		case "goods":
-			_, err = storeAccessTokenToRedis([]byte(ac.AccessToken), goodsAccessTokenInRedis, ac.ExpiresIn)
-		case "text":
-			_, err = storeAccessTokenToRedis([]byte(ac.AccessToken), textAccessTokenInRedis, ac.ExpiresIn)
+		if cacheDriver == "redis" {
+			if key, ok := redisKeyMap[t]; ok {
+				_ = storeAccessTokenToRedis([]byte(ac.AccessToken), key, ac.ExpiresIn)
+			}
+		} else {
+			if key, ok := fileKeyMap[t]; ok {
+				_ = storeAccessTokenToFile(body, key)
+			}
 		}
 	} else {
 		return "", errors.New(ac.Error)
@@ -81,16 +113,8 @@ func getAccessTokenFromRedis(key string) (string, error) {
 	return redis2.Get(key)
 }
 
-//func getCachedTextAccessToken() (string, error) {
-//	return getCachedAccessToken(textCachePath)
-//}
-//
-//func getCachedGoodsAccessToken() (string, error) {
-//	return getCachedAccessToken(goodsCachePath)
-//}
-
 //获取本地缓存的token等相关数据
-func getFileCachedAccessToken(cachePath string) (string, error) {
+func getAccessTokenFromFile(cachePath string) (string, error) {
 	c, err := file2.Get(cachePath)
 	if err != nil {
 		return "", err
@@ -111,17 +135,17 @@ func getFileCachedAccessToken(cachePath string) (string, error) {
 	return ac.AccessToken, nil
 }
 
-func storeAccessTokenToRedis(body []byte, key string, expire int64) (bool, error) {
+func storeAccessTokenToRedis(body []byte, key string, expire int64) error {
 	_, err := redis2.Set(key, body, expire)
 	if err != nil {
-		return false, err
+		return err
 	}
-	return true, err
+	return nil
 }
 
-//func storeAccessTokenToFile(path string, body []byte) (bool, error) {
-//	return file2.Set(path, body)
-//}
+func storeAccessTokenToFile(body []byte, path string) error {
+	return file2.Set(path, body)
+}
 
 //解析返回的token等相关数据
 func unmarshalToken(token []byte) (baidu_config.AccessToken, error) {
