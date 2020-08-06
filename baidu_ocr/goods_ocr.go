@@ -2,6 +2,7 @@ package baidu_ocr
 
 import (
 	"errors"
+	"fmt"
 )
 
 type GoodsParams struct {
@@ -47,6 +48,7 @@ func DoGoodsOcr(base64str string, t string) ([]byte, error) {
 	}
 	token, _ := GetAccessToken("goods")
 	url += "?access_token=" + token + "&baike_num=3"
+	fmt.Printf(url)
 	params := []byte("image=" + base64str)
 	b, err := formRequest(params, url)
 	if err != nil {

@@ -21,14 +21,8 @@ var (
 	goodsAccessTokenInRedis string
 	textAccessTokenInRedis  string
 	cacheDriver             string
-	redisKeyMap             = map[string]string{
-		"goods": goodsAccessTokenInRedis,
-		"text":  textAccessTokenInRedis,
-	}
-	fileKeyMap = map[string]string{
-		"goods": goodsCachePath,
-		"text":  textCachePath,
-	}
+	redisKeyMap             = map[string]string{}
+	fileKeyMap              = map[string]string{}
 )
 
 func init() {
@@ -41,6 +35,14 @@ func init() {
 	goodsAccessTokenInRedis = os.Getenv("REDIS_GOODS_ACTOKEN_KEY")
 	textAccessTokenInRedis = os.Getenv("REDIS_TEXT_ACTOKEN_KEY")
 	cacheDriver = os.Getenv("CACHE_DRIVER")
+	redisKeyMap = map[string]string{
+		"goods": goodsAccessTokenInRedis,
+		"text":  textAccessTokenInRedis,
+	}
+	fileKeyMap = map[string]string{
+		"goods": goodsCachePath,
+		"text":  textCachePath,
+	}
 }
 
 //从百度api获取access_token
