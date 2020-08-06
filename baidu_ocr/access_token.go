@@ -10,10 +10,20 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
-	"github.com/leychan/common_ocr/baidu_ocr/baidu_config"
 	file2 "github.com/leychan/common_ocr/cache/file"
 	redis2 "github.com/leychan/common_ocr/cache/redis"
 )
+
+type accessToken struct {
+	RefreshToken     string `json:"refresh_token"`
+	ExpiresIn        int64  `json:"expires_in"`
+	SessionKey       string `json:"session_key"`
+	AccessToken      string `json:"access_token"`
+	Scope            string `json:"scope"`
+	SessionSecret    string `json:"session_secret"`
+	ErrorDescription string `json:"error_description"`
+	Error            string `json:"error"`
+}
 
 var (
 	goodsCachePath          string
@@ -150,8 +160,8 @@ func storeAccessTokenToFile(body []byte, path string) error {
 }
 
 //解析返回的token等相关数据
-func unmarshalToken(token []byte) (baidu_config.AccessToken, error) {
-	v := baidu_config.AccessToken{}
+func unmarshalToken(token []byte) (accessToken, error) {
+	v := accessToken{}
 	err := json.Unmarshal(token, &v)
 	if err != nil {
 		fmt.Println(err)
